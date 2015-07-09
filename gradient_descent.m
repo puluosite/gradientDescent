@@ -2,6 +2,12 @@ clear all;
 close all;
 clc;
 
+%% fitting method
+% step 1. gradient descent for all parameters in one iter
+% step 2. change one parameter at a time when backtracking cannot find a
+%   step. This is because simulator might suffer from accuracy problem
+% step 3. random fitting when step 2 is done (try 10000 points around the opt point and find the true opt)
+
 %% old gradient descent
 err = 1.0;
 lamda = 1e-4;
@@ -74,32 +80,56 @@ plot(all_y,'ro-');
 
 
 %% newton method
+% http://www.eecs.berkeley.edu/~wainwrig/ee227a/hw6soln_fa09.pdf
+% convex optimization p484
 clear f;
+
 MAXITS = 500; % Maximum number of iterations
 BETA = 0.5; % Armijo parameter
 SIGMA = 0.1; % Armijo parameter
+
 GRADTOL = 1e-7; % Tolerance for gradient
-load xinit.ascii;
-load A.ascii;
-load b.ascii
-x = xinit;
-m = size(A,1);
-n = size(A,2);
+
+% load xinit.ascii;
+% load A.ascii;
+% load b.ascii
+
+%x = xinit; % x is a vector
+x = [0.1;0.2;0.3];
+% m = size(A,1);
+% n = size(A,2);
+
 for iter=1:MAXITS,
-val = x’*log(x); % current function value
-f(iter) = val;
-grad = 1 + log(x); % current gradient
-hess = diag(1./x);
-temp = -[hess A’; A zeros(m,m)] \ [grad; zeros(m,1)];
-newt = temp(1:n);
-primal_lambda = temp(n+1:(n+m));
-descmag = grad’*newt; % Check magnitude of descent
-if (abs(descmag) < GRADTOL) break; end;
-t = 1;
-while (min(x + t*newt) <= 0) t = BETA*t; end;
-while ( ((x+t*newt)’*log(x+t*newt)) - val >= SIGMA*t*descmag)
-t = BETA*t;
+    val = x'*log(x); % current function value
+    f(iter) = val;
+    grad = 1 + log(x); % current gradient
+    hess = diag(1./x); % hessian of the function
+    msg = sprintf('iter: %d\n func val: %f\t grad: %f %f %f\n',iter, val, grad(1), grad(2), grad(3));
+    disp(msg);
+    % newt = -hess^(-1)*grad; descmag = grad'*(-newt) Page:487 in convex
+%     temp = -[hess A'; A zeros(m,m)] \ [grad; zeros(m,1)];
+%     newt = temp(1:n);
+%     primal_lambda = temp(n+1:(n+m));
+%     descmag = grad'*newt; % Check magnitude of descent
+    %newt = -hess \grad;
+    newt = - inv(hess)*grad;
+    descmag = grad'*newt; % Check magnitude of descent
+
+    %stopping criterion
+    if (abs(descmag) < GRADTOL) break; end;
+    
+    % find step by Armijo
+    t = 1;
+    %while (min(x + t*newt) <= 0) t = BETA*t; end;
+    % f(x+d_x) > f(x) + sigma*t*grad'*newt
+    while ( ((x+t*newt)'*log(x+t*newt)) - val >= SIGMA*t*descmag)
+        t = BETA*t;
+    end;
+    
+    x = x + t*newt;
 end;
-x = x + t*newt;
-end;
-gradviol = nor
+% gradviol = norm(A*x -b,2);
+% pstar = val;
+
+
+
