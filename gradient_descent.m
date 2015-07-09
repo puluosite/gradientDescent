@@ -104,6 +104,9 @@ for iter=1:MAXITS,
     f(iter) = val;
     grad = 1 + log(x); % current gradient
     hess = diag(1./x); % hessian of the function
+    % !!! in newton method, hess >= 0, otherwise, use the gradient step, other
+    % than the newton step
+    assert
     msg = sprintf('iter: %d\n func val: %f\t grad: %f %f %f\n',iter, val, grad(1), grad(2), grad(3));
     disp(msg);
     % newt = -hess^(-1)*grad; descmag = grad'*(-newt) Page:487 in convex
@@ -131,5 +134,14 @@ end;
 % gradviol = norm(A*x -b,2);
 % pstar = val;
 
+%% with constraints
+% http://www.cs.berkeley.edu/~pabbeel/cs287-fa11/slides/NonlinearOptimizationForOptimalControl.pdf
 
+% constraints with Ax=b
+% method 1: f(x) Ax = b => min f(z) = min f(Fz + x^) where F and x^ are the
+% allfine feasible solutions, However, we need to find F and x^
+
+% method 2: extended Newton Method
+% prereq: 1. init point must be on Ax = b 
+%         2. direction newt must be A*newt = 0;
 
