@@ -71,3 +71,35 @@ end
 plot(all_y,'ro-');
 
 %% exact line search
+
+
+%% newton method
+clear f;
+MAXITS = 500; % Maximum number of iterations
+BETA = 0.5; % Armijo parameter
+SIGMA = 0.1; % Armijo parameter
+GRADTOL = 1e-7; % Tolerance for gradient
+load xinit.ascii;
+load A.ascii;
+load b.ascii
+x = xinit;
+m = size(A,1);
+n = size(A,2);
+for iter=1:MAXITS,
+val = x’*log(x); % current function value
+f(iter) = val;
+grad = 1 + log(x); % current gradient
+hess = diag(1./x);
+temp = -[hess A’; A zeros(m,m)] \ [grad; zeros(m,1)];
+newt = temp(1:n);
+primal_lambda = temp(n+1:(n+m));
+descmag = grad’*newt; % Check magnitude of descent
+if (abs(descmag) < GRADTOL) break; end;
+t = 1;
+while (min(x + t*newt) <= 0) t = BETA*t; end;
+while ( ((x+t*newt)’*log(x+t*newt)) - val >= SIGMA*t*descmag)
+t = BETA*t;
+end;
+x = x + t*newt;
+end;
+gradviol = nor
